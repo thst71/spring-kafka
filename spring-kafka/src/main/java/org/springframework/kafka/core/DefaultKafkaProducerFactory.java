@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
@@ -426,6 +427,57 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 	 */
 	public void setMaxAge(Duration maxAge) {
 		this.maxAge = maxAge.toMillis();
+	}
+
+	/**
+	 * This method will use the properties of the instance and the given properties to create a new producer factory.
+	 * <p>If the {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} makes a copy of itself, the transaction id prefix is recovered from.
+	 * the properties. If you want to change the ID config, add a new {@link org.apache.kafka.clients.producer.ProducerConfig#TRANSACTIONAL_ID_CONFIG}
+	 * key to the override config.</p>
+	 * @param overrideProperties the properties to be applied to the new factory
+	 * @return {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} with properties applied
+	 */
+	@Override
+	public ProducerFactory<K, V> copyWithConfigurationOverride(Map<String, Object> overrideProperties) {
+		Map<String, Object> producerProperties = new HashMap<>(this.getConfigurationProperties());
+		producerProperties.putAll(overrideProperties);
+		producerProperties = ensureExistingTransactionIdPrefixInProperties(producerProperties);
+		DefaultKafkaProducerFactory<K, V> newFactory = new DefaultKafkaProducerFactory<>(producerProperties,
+				getKeySerializerSupplier(),
+				getValueSerializerSupplier());
+		newFactory.setPhysicalCloseTimeout((int) getPhysicalCloseTimeout().getSeconds());
+		newFactory.setProducerPerConsumerPartition(isProducerPerConsumerPartition());
+		newFactory.setProducerPerThread(isProducerPerThread());
+		for (ProducerPostProcessor<K, V> templatePostProcessor : getPostProcessors()) {
+			newFactory.addPostProcessor(templatePostProcessor);
+		}
+		for (ProducerFactory.Listener<K, V> templateListener : getListeners()) {
+			newFactory.addListener(templateListener);
+		}
+		return newFactory;
+	}
+
+
+	/**
+	 * This method ensures, that the returned properties map contains a transaction id prefix.
+	 * <P>
+	 *     The {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} modifies the local properties copy, the txn key is removed and
+	 *     stored locally in a property. To make a proper copy of the properties in a new factory, the transactionId has to be reinserted prior use.
+	 *     The incoming properties are checked for a transactionId key. If none is there, the one existing in the factory is added.
+	 * </P>
+	 * @param producerProperties the properties to be used for the new factory
+	 * @return the producerProperties or a copy with the transaction ID set
+	 */
+	private Map<String, Object> ensureExistingTransactionIdPrefixInProperties(Map<String, Object> producerProperties) {
+		if (Objects.nonNull(getTransactionIdPrefix())) {
+			if (!producerProperties.containsKey(ProducerConfig.TRANSACTIONAL_ID_CONFIG)) {
+				Map<String, Object> producerPropertiesWithTxnId = new HashMap<>(producerProperties);
+				producerPropertiesWithTxnId.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, getTransactionIdPrefix());
+				return producerPropertiesWithTxnId;
+			}
+		}
+
+		return producerProperties;
 	}
 
 	/**

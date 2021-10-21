@@ -24,7 +24,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -38,7 +37,6 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.Producer;
-import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.Metric;
@@ -192,61 +190,12 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V>, ApplicationCo
 		this.micrometerEnabled = KafkaUtils.MICROMETER_PRESENT;
 		this.customProducerFactory = configOverrides != null && configOverrides.size() > 0;
 		if (this.customProducerFactory) {
-			Map<String, Object> configs = new HashMap<>(producerFactory.getConfigurationProperties());
-			configs.putAll(configOverrides);
-			this.producerFactory = copyProducerFactory(producerFactory, configs);
+			this.producerFactory = producerFactory.copyWithConfigurationOverride(configOverrides);
 		}
 		else {
 			this.producerFactory = producerFactory;
 		}
 		this.transactional = this.producerFactory.transactionCapable();
-	}
-
-	/**
-	 * This method will use the producerFactoryTemplate and the given properties to create a new producer factory.
-	 * @param producerFactoryTemplate the factory to be copied
-	 * @param producerProperties the properties to be applied to the new factory
-	 * @return {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} with producerProperties applied
-	 */
-	private DefaultKafkaProducerFactory<K, V> copyProducerFactory(ProducerFactory<K, V> producerFactoryTemplate,
-			Map<String, Object> producerProperties) {
-		Map<String, Object> finalProducerProperties = ensureExistingTransactionIdPrefixInProperties(producerFactoryTemplate, producerProperties);
-		DefaultKafkaProducerFactory<K, V> newFactory = new DefaultKafkaProducerFactory<>(finalProducerProperties,
-				producerFactoryTemplate.getKeySerializerSupplier(), producerFactoryTemplate.getValueSerializerSupplier());
-		newFactory.setPhysicalCloseTimeout((int) producerFactoryTemplate.getPhysicalCloseTimeout().getSeconds());
-		newFactory.setProducerPerConsumerPartition(producerFactoryTemplate.isProducerPerConsumerPartition());
-		newFactory.setProducerPerThread(producerFactoryTemplate.isProducerPerThread());
-		for (ProducerPostProcessor<K, V> templatePostProcessor : producerFactoryTemplate.getPostProcessors()) {
-			newFactory.addPostProcessor(templatePostProcessor);
-		}
-		for (ProducerFactory.Listener<K, V> templateListener : producerFactoryTemplate.getListeners()) {
-			newFactory.addListener(templateListener);
-		}
-		return newFactory;
-	}
-
-	/**
-	 * This method ensures, that the returned properties map contains a transaction id prefix.#
-	 * <P>
-	 *     The {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} modifies the local properties copy, the txn key is removed and stored locally in a property. To make a proper copy of the
-	 *     properties in the new factory, the transactionId has to be reinserted prior use.
-	 *     To avoid duplicate transaction Ids, the incoming properties are checked for a new transactionId. If none is there, the existing one is used.
-	 * </P>
-	 * @param producerFactoryTemplate the factory to copy the properties from
-	 * @param producerProperties the properties to be used for the new factory
-	 * @return the producerProperties or a copy with the transaction ID set
-	 */
-	private Map<String, Object> ensureExistingTransactionIdPrefixInProperties(ProducerFactory<K, V> producerFactoryTemplate,
-			Map<String, Object> producerProperties) {
-		if (Objects.nonNull(producerFactoryTemplate.getTransactionIdPrefix())) {
-			if (!producerProperties.containsKey(ProducerConfig.TRANSACTIONAL_ID_CONFIG)) {
-				Map<String, Object> producerPropertiesWithTxnId = new HashMap<>(producerProperties);
-				producerPropertiesWithTxnId.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, producerFactoryTemplate.getTransactionIdPrefix());
-				return producerPropertiesWithTxnId;
-			}
-		}
-
-		return producerProperties;
 	}
 
 	@Override

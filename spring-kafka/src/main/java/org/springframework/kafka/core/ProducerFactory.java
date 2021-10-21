@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2020 the original author or authors.
+ * Copyright 2016-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.springframework.kafka.core;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -272,6 +273,31 @@ public interface ProducerFactory<K, V> {
 		return null;
 	}
 
+
+	/**
+	 * This method will use the properties of the instance and the given properties to create a new producer factory.
+	 * <p>Note: {@see org.springframework.kafka.core.DefaultKafkaProducerFactory#copyWithConfigurationOverride}</p>
+	 * @param overrideProperties the properties to be applied to the new factory
+	 * @return {@link org.springframework.kafka.core.ProducerFactory} with properties applied
+	 */
+	default ProducerFactory<K, V> copyWithConfigurationOverride(Map<String, Object> overrideProperties) {
+		Map<String, Object> producerProperties = new HashMap<>(this.getConfigurationProperties());
+		producerProperties.putAll(overrideProperties);
+
+		DefaultKafkaProducerFactory<K, V> newFactory = new DefaultKafkaProducerFactory<>(producerProperties,
+				getKeySerializerSupplier(),
+				getValueSerializerSupplier());
+		newFactory.setPhysicalCloseTimeout((int) getPhysicalCloseTimeout().getSeconds());
+		newFactory.setProducerPerConsumerPartition(isProducerPerConsumerPartition());
+		newFactory.setProducerPerThread(isProducerPerThread());
+		for (ProducerPostProcessor<K, V> templatePostProcessor : getPostProcessors()) {
+			newFactory.addPostProcessor(templatePostProcessor);
+		}
+		for (ProducerFactory.Listener<K, V> templateListener : getListeners()) {
+			newFactory.addListener(templateListener);
+		}
+		return newFactory;
+	}
 
 	/**
 	 * Called whenever a producer is added or removed.
