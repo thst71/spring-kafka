@@ -174,6 +174,7 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V>, ApplicationCo
 	 * If the configOverrides is not null or empty, a new
 	 * {@link DefaultKafkaProducerFactory} will be created with merged producer properties
 	 * with the overrides being applied after the supplied factory's properties.
+	 * Copy PostProcessors from original factory to keep instrumentation alive.
 	 * @param producerFactory the producer factory.
 	 * @param autoFlush true to flush after each send.
 	 * @param configOverrides producer configuration properties to override.
@@ -195,6 +196,9 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V>, ApplicationCo
 			newFactory.setPhysicalCloseTimeout((int) producerFactory.getPhysicalCloseTimeout().getSeconds());
 			newFactory.setProducerPerConsumerPartition(producerFactory.isProducerPerConsumerPartition());
 			newFactory.setProducerPerThread(producerFactory.isProducerPerThread());
+			for(int i=0; i<producerFactory.getPostProcessors().size(); i++) {
+				newFactory.addPostProcessor(producerFactory.getPostProcessors().get(i));
+			}
 			this.producerFactory = newFactory;
 		}
 		else {
