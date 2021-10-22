@@ -172,9 +172,9 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V>, ApplicationCo
 	 * to occur immediately, regardless of that setting, or if you wish to block until the
 	 * broker has acknowledged receipt according to the producer's {@code acks} property.
 	 * If the configOverrides is not null or empty, a new
-	 * {@link DefaultKafkaProducerFactory} will be created with merged producer properties
-	 * with the overrides being applied after the supplied factory's properties.
-	 * The {@link org.springframework.beans.factory.config.BeanPostProcessor}s from the original factory are copied over to keep instrumentation alive.
+	 * {@link ProducerFactory} will be created using {@link org.springframework.kafka.core.ProducerFactory#copyWithConfigurationOverride(java.util.Map)}
+	 * The factory shall apply the overrides after the supplied factory's properties.
+	 * The {@link org.springframework.kafka.core.ProducerPostProcessor}s from the original factory are copied over to keep instrumentation alive.
 	 * Registered {@link org.springframework.kafka.core.ProducerFactory.Listener}s are also added to the new factory.
 	 * @param producerFactory the producer factory.
 	 * @param autoFlush true to flush after each send.

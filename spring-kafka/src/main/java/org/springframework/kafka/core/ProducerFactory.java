@@ -18,7 +18,6 @@ package org.springframework.kafka.core;
 
 import java.time.Duration;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -273,30 +272,20 @@ public interface ProducerFactory<K, V> {
 		return null;
 	}
 
-
 	/**
 	 * This method will use the properties of the instance and the given properties to create a new producer factory.
-	 * <p>Note: {@see org.springframework.kafka.core.DefaultKafkaProducerFactory#copyWithConfigurationOverride}</p>
+	 * <p>The copy shall prioritize the override properties over the configured values. It is in the responsibility of the factory
+	 * implementation to make sure the configuration of the new factory is identical, complete and correct.</p>
+	 * <p>ProducerPostProcessor and Listeners must stay intact.</p>
+	 * <p>If the factory does not implement this method, an exception will be thrown.</p>
+	 * <p>Note: see {@link org.springframework.kafka.core.DefaultKafkaProducerFactory#copyWithConfigurationOverride}</p>
 	 * @param overrideProperties the properties to be applied to the new factory
 	 * @return {@link org.springframework.kafka.core.ProducerFactory} with properties applied
+	 * @since 2.5.17
+	 * @see org.springframework.kafka.core.KafkaTemplate#KafkaTemplate(ProducerFactory, java.util.Map)
 	 */
 	default ProducerFactory<K, V> copyWithConfigurationOverride(Map<String, Object> overrideProperties) {
-		Map<String, Object> producerProperties = new HashMap<>(this.getConfigurationProperties());
-		producerProperties.putAll(overrideProperties);
-
-		DefaultKafkaProducerFactory<K, V> newFactory = new DefaultKafkaProducerFactory<>(producerProperties,
-				getKeySerializerSupplier(),
-				getValueSerializerSupplier());
-		newFactory.setPhysicalCloseTimeout((int) getPhysicalCloseTimeout().getSeconds());
-		newFactory.setProducerPerConsumerPartition(isProducerPerConsumerPartition());
-		newFactory.setProducerPerThread(isProducerPerThread());
-		for (ProducerPostProcessor<K, V> templatePostProcessor : getPostProcessors()) {
-			newFactory.addPostProcessor(templatePostProcessor);
-		}
-		for (ProducerFactory.Listener<K, V> templateListener : getListeners()) {
-			newFactory.addListener(templateListener);
-		}
-		return newFactory;
+		throw new UnsupportedOperationException("This factory implementation doesn't support creating reconfigured copies.");
 	}
 
 	/**

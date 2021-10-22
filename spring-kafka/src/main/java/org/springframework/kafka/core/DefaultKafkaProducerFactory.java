@@ -460,11 +460,11 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 
 	/**
 	 * This method ensures, that the returned properties map contains a transaction id prefix.
-	 * <P>
+	 * <p>
 	 *     The {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} modifies the local properties copy, the txn key is removed and
 	 *     stored locally in a property. To make a proper copy of the properties in a new factory, the transactionId has to be reinserted prior use.
 	 *     The incoming properties are checked for a transactionId key. If none is there, the one existing in the factory is added.
-	 * </P>
+	 * </p>
 	 * @param producerProperties the properties to be used for the new factory
 	 * @return the producerProperties or a copy with the transaction ID set
 	 */
