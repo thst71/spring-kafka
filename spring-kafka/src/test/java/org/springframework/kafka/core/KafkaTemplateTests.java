@@ -105,6 +105,21 @@ public class KafkaTemplateTests {
 
 	private static Consumer<Integer, String> consumer;
 
+	private static ProducerFactory.Listener<String, String> noopListener = new ProducerFactory.Listener<>() {
+
+		@Override
+		public void producerAdded(String id, Producer<String, String> producer) {
+		}
+
+		@Override
+		public void producerRemoved(String id, Producer<String, String> producer) {
+		}
+
+	};
+
+	private static ProducerPostProcessor<String, String> noopProducerPostProcessor = processor -> processor;
+
+
 	@BeforeAll
 	public static void setUp() {
 		embeddedKafka = EmbeddedKafkaCondition.getBroker();
@@ -469,19 +484,7 @@ public class KafkaTemplateTests {
 	}
 
 	@Test
-	void testConfigOverrides() {
-		ProducerFactory.Listener<String, String> noopListener = new ProducerFactory.Listener<>() {
-
-			@Override
-			public void producerAdded(String id, Producer<String, String> producer) {
-			}
-
-			@Override
-			public void producerRemoved(String id, Producer<String, String> producer) {
-			}
-
-		};
-		ProducerPostProcessor<String, String> noopProducerPostProcessor = processor -> processor;
+	void testConfigOverridesWithDefaultKafkaProducerFactory() {
 		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
 		DefaultKafkaProducerFactory<String, String> pf = new DefaultKafkaProducerFactory<>(senderProps);
 		pf.setPhysicalCloseTimeout(6);
@@ -499,6 +502,7 @@ public class KafkaTemplateTests {
 		// clone the factory again with empty properties
 		KafkaTemplate<String, String> templateWTX2_2 = new KafkaTemplate<>(templateWTX2.getProducerFactory(), true,
 				Collections.singletonMap("dummy", "dont use"));
+		assertThat(template.getProducerFactory()).isOfAnyClassIn(DefaultKafkaProducerFactory.class);
 		assertThat(template.getProducerFactory().getConfigurationProperties()
 				.get(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG)).isEqualTo(StringSerializer.class);
 		assertThat(template.getProducerFactory().getPhysicalCloseTimeout()).isEqualTo(Duration.ofSeconds(6));
@@ -518,6 +522,64 @@ public class KafkaTemplateTests {
 		assertThat(templateWTX2.getProducerFactory().getTransactionIdPrefix()).isEqualTo("TX2");
 		// and: we reuse the id from the template (TX2) in the third copy factory
 		assertThat(templateWTX2_2.getProducerFactory().getTransactionIdPrefix()).isEqualTo("TX2");
+	}
+
+	@Test
+	void testConfigOverridesWithCustomProducerFactory() {
+		Map<String, Object> senderProps = KafkaTestUtils.producerProps(embeddedKafka);
+		ProducerFactory<String, String> pf = new ProducerFactory<>() {
+			@Override
+			public Producer<String, String> createProducer() {
+				return null;
+			}
+
+			@Override
+			public List<Listener<String, String>> getListeners() {
+				return Collections.singletonList(noopListener);
+			}
+
+			@Override
+			public List<ProducerPostProcessor<String, String>> getPostProcessors() {
+				return Collections.singletonList(noopProducerPostProcessor);
+			}
+
+			@Override
+			public Map<String, Object> getConfigurationProperties() {
+				return Collections.singletonMap(ProducerConfig.ACKS_CONFIG, "all");
+			}
+
+			@Override
+			public Duration getPhysicalCloseTimeout() {
+				return Duration.ofSeconds(6);
+			}
+
+			@Override
+			public boolean isProducerPerConsumerPartition() {
+				return true;
+			}
+
+			@Override
+			public boolean isProducerPerThread() {
+				return false;
+			}
+		};
+
+		Map<String, Object> overrides = new HashMap<>();
+		overrides.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+		overrides.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "TX");
+		KafkaTemplate<String, String> template = new KafkaTemplate<>(pf, true, overrides);
+		assertThat(template.getProducerFactory()).isOfAnyClassIn(DefaultKafkaProducerFactory.class);
+		assertThat(template.getProducerFactory().getConfigurationProperties()
+				.get(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG)).isEqualTo(StringSerializer.class);
+		assertThat(template.getProducerFactory().getPhysicalCloseTimeout()).isEqualTo(Duration.ofSeconds(6));
+		assertThat(template.getProducerFactory().isProducerPerConsumerPartition()).isTrue();
+		assertThat(template.getProducerFactory().isProducerPerThread()).isFalse();
+		assertThat(template.isTransactional()).isTrue();
+		assertThat(template.getProducerFactory().getListeners()).isEqualTo(pf.getListeners());
+		assertThat(template.getProducerFactory().getListeners().size()).isEqualTo(1);
+		assertThat(template.getProducerFactory().getPostProcessors()).isEqualTo(pf.getPostProcessors());
+		assertThat(template.getProducerFactory().getPostProcessors().size()).isEqualTo(1);
+		assertThat(template.getProducerFactory().getTransactionIdPrefix()).isEqualTo("TX");
 	}
 
 	@Test
