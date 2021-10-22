@@ -468,7 +468,6 @@ public class KafkaTemplateTests {
 		pf.destroy();
 	}
 
-	// TODO this test runs mainly through DefaultKafkaProducerFactory and should be tested there as well
 	@Test
 	void testConfigOverrides() {
 		ProducerFactory.Listener<String, String> noopListener = new ProducerFactory.Listener<>() {
