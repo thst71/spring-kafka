@@ -273,14 +273,18 @@ public interface ProducerFactory<K, V> {
 	}
 
 	/**
-	 * This method will use the properties of the instance and the given properties to create a new producer factory.
-	 * <p>The copy shall prioritize the override properties over the configured values. It is in the responsibility of the factory
-	 * implementation to make sure the configuration of the new factory is identical, complete and correct.</p>
+	 * This method will use the properties of the instance and the given properties to
+	 * create a new producer factory.
+	 * <p>The copy shall prioritize the override properties over the configured values.
+	 * It is in the responsibility of the factory implementation to make sure the
+	 * configuration of the new factory is identical, complete and correct.</p>
 	 * <p>ProducerPostProcessor and Listeners must stay intact.</p>
 	 * <p>If the factory does not implement this method, an exception will be thrown.</p>
-	 * <p>Note: see {@link org.springframework.kafka.core.DefaultKafkaProducerFactory#copyWithConfigurationOverride}</p>
+	 * <p>Note: see
+	 * {@link org.springframework.kafka.core.DefaultKafkaProducerFactory#copyWithConfigurationOverride}</p>
 	 * @param overrideProperties the properties to be applied to the new factory
-	 * @return {@link org.springframework.kafka.core.ProducerFactory} with properties applied
+	 * @return {@link org.springframework.kafka.core.ProducerFactory} with properties
+	 * applied
 	 * @since 2.5.17
 	 * @see org.springframework.kafka.core.KafkaTemplate#KafkaTemplate(ProducerFactory, java.util.Map)
 	 */

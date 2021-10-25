@@ -172,11 +172,15 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V>, ApplicationCo
 	 * to occur immediately, regardless of that setting, or if you wish to block until the
 	 * broker has acknowledged receipt according to the producer's {@code acks} property.
 	 * If the configOverrides is not null or empty, a new
-	 * {@link ProducerFactory} will be created using {@link org.springframework.kafka.core.ProducerFactory#copyWithConfigurationOverride(java.util.Map)}
+	 * {@link ProducerFactory} will be created using
+	 * {@link org.springframework.kafka.core.ProducerFactory#copyWithConfigurationOverride(java.util.Map)}
 	 * The factory shall apply the overrides after the supplied factory's properties.
-	 * The {@link org.springframework.kafka.core.ProducerPostProcessor}s from the original factory are copied over to keep instrumentation alive.
-	 * Registered {@link org.springframework.kafka.core.ProducerFactory.Listener}s are also added to the new factory.
-	 * If the factory implementation does not support the copy operation, a generic copy of the ProducerFactory is created which will be of type
+	 * The {@link org.springframework.kafka.core.ProducerPostProcessor}s from the
+	 * original factory are copied over to keep instrumentation alive.
+	 * Registered {@link org.springframework.kafka.core.ProducerFactory.Listener}s are
+	 * also added to the new factory. If the factory implementation does not support
+	 * the copy operation, a generic copy of the ProducerFactory is created which will
+	 * be of type
 	 * DefaultKafkaProducerFactory.
 	 * @param producerFactory the producer factory.
 	 * @param autoFlush true to flush after each send.
@@ -213,11 +217,13 @@ public class KafkaTemplate<K, V> implements KafkaOperations<K, V>, ApplicationCo
 	}
 
 	/**
-	 * This method copies a ProducerFactory that misses the implementation of {@link org.springframework.kafka.core.ProducerFactory#copyWithConfigurationOverride(java.util.Map)}.
+	 * This method copies a ProducerFactory that misses the implementation of
+	 * {@link org.springframework.kafka.core.ProducerFactory#copyWithConfigurationOverride(java.util.Map)}.
 	 *
 	 * @param templateFactory the ProducerFactory to copy from
 	 * @param configOverrides new properties to be applied onto the templateFactory properties
-	 * @return a DefaultKafkaProducerFactory configured with configOverrides and all public reachable settings of ProducerFactory
+	 * @return a DefaultKafkaProducerFactory configured with configOverrides and all
+	 * public reachable settings of ProducerFactory
 	 */
 	private DefaultKafkaProducerFactory<K, V> handleNonCopyableProducerFactory(ProducerFactory<K, V> templateFactory, Map<String, Object> configOverrides) {
 		Map<String, Object> producerProperties = new HashMap<>(templateFactory.getConfigurationProperties());
