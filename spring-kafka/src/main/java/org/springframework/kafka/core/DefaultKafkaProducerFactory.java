@@ -430,12 +430,16 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 	}
 
 	/**
-	 * This method will use the properties of the instance and the given properties to create a new producer factory.
-	 * <p>If the {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} makes a copy of itself, the transaction id prefix is recovered from.
-	 * the properties. If you want to change the ID config, add a new {@link org.apache.kafka.clients.producer.ProducerConfig#TRANSACTIONAL_ID_CONFIG}
+	 * This method will use the properties of the instance and the given properties to
+	 * create a new producer factory.
+	 * <p>If the {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} makes a
+	 * copy of itself, the transaction id prefix is recovered from the properties. If
+	 * you want to change the ID config, add a new
+	 * {@link org.apache.kafka.clients.producer.ProducerConfig#TRANSACTIONAL_ID_CONFIG}
 	 * key to the override config.</p>
 	 * @param overrideProperties the properties to be applied to the new factory
-	 * @return {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} with properties applied
+	 * @return {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} with
+	 *  properties applied
 	 */
 	@Override
 	public ProducerFactory<K, V> copyWithConfigurationOverride(Map<String, Object> overrideProperties) {
@@ -461,9 +465,12 @@ public class DefaultKafkaProducerFactory<K, V> extends KafkaResourceFactory
 	/**
 	 * This method ensures, that the returned properties map contains a transaction id prefix.
 	 * <p>
-	 *     The {@link org.springframework.kafka.core.DefaultKafkaProducerFactory} modifies the local properties copy, the txn key is removed and
-	 *     stored locally in a property. To make a proper copy of the properties in a new factory, the transactionId has to be reinserted prior use.
-	 *     The incoming properties are checked for a transactionId key. If none is there, the one existing in the factory is added.
+	 *     The {@link org.springframework.kafka.core.DefaultKafkaProducerFactory}
+	 *      modifies the local properties copy, the txn key is removed and
+	 *     stored locally in a property. To make a proper copy of the properties in a
+	 *      new factory, the transactionId has to be reinserted prior use.
+	 *     The incoming properties are checked for a transactionId key. If none is
+	 *      there, the one existing in the factory is added.
 	 * </p>
 	 * @param producerProperties the properties to be used for the new factory
 	 * @return the producerProperties or a copy with the transaction ID set
